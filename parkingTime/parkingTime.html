@@ -1,0 +1,144 @@
+<template>
+    <div class="slds-box slds-theme_shade">
+        <h2 class="slds-text-align_center ">Welcome to parking booking system</h2>
+        <div class="slds-form slds-form_horizontal slds-p-bottom_medium slds-grid slds-wrap">
+            <label class="slds-form-element__label slds-p-right_small" for="date-input">Select
+                Date</label>
+            <input type="date" id="date-input" name="date-input" oninput={handleDateChange} />
+            <lightning-button variant="brand" label="Book Slot" title="Open Modal" onclick={customAllSpots}
+                class="slds-align_absolute-center slds-size_1-of-5">
+            </lightning-button>
+            <lightning-button variant="danger" label="Get Record" title="Open get record pop-up" onclick={openPopup}
+                class="slds-align_absolute-right slds-m-right_large slds-size_1-of-5">
+            </lightning-button>
+        </div>
+        <template if:true={isDateSelected}>
+            <template for:each={logisticsMap} for:item="logistic">
+                <div key={logistic.key} class="container">
+                    <span class="parkingTile">
+                        <span class="title">{logistic.key}</span>
+                    </span>
+                    <template for:each={logistic.values} for:item="timeSlot">
+                        <span key={timeSlot.Id} class="redtiles">
+                            <h4 class="status">Booked</h4>
+                            <h4 class="titledetail">{timeSlot.Time_Slot__c}</h4>
+                        </span>
+                    </template>
+                    <span class="tiles">
+                        <h4 class="status">Vacant</h4>
+                        <lightning-button variant="brand-outline" label="Book Slot" title="Open Modal"
+                            onclick={customShowModalPopup} data-selectedslot={logistic.key}
+                            class="slds-m-left_x-small"></lightning-button>
+                    </span>
+                </div>
+            </template>
+        </template>
+    </div>
+    <!-- modal start -->
+    <template if:true={customFormModal}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- modal header start -->
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close" onclick={customHideModalPopup}>
+                        <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse"
+                            size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 class="slds-text-heading_medium slds-hyphenate">
+                        Logistic Object Creation
+                    </h2>
+                </header>
+                <!-- modal body start -->
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-col slds-size_6-of-12 slds-p-horizontal--medium slds-m-bottom_medium">
+                            <lightning-input label="Driver Name" onchange={saveName}></lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_6-of-12 slds-p-horizontal--medium slds-m-bottom_medium">
+                            <lightning-input label="Vehicle Number" onchange={saveVehicleNumber}></lightning-input>
+                        </div>
+                        <template if:false={allParking}>
+                            <div class="slds-col slds-size_6-of-12 slds-p-horizontal--medium slds-m-bottom_medium">
+                                <lightning-combobox name="progress" label="Parking Spot" value={value}
+                                    placeholder="Select parking Spot" options={parkingSpot}
+                                    onchange={handleParkingSpotChange}>
+                                </lightning-combobox>
+                            </div>
+                        </template>
+                        <template if:true={allParking}>
+                            <div class="slds-col slds-size_6-of-12 slds-p-horizontal--medium slds-m-bottom_medium">
+                                <lightning-combobox name="progress" label="Parking Spot" value={value}
+                                    placeholder="Select parking Spot" options={defaultParkingSlot}
+                                    onchange={handleParkingSpotChange}>
+                                </lightning-combobox>
+                            </div>
+                        </template>
+                        <div class="slds-col slds-size_6-of-12 slds-p-horizontal--medium slds-m-bottom_medium">
+                            <lightning-combobox name="progress" label="Parking Time Slot" value={value}
+                                placeholder="Select parking time" options={parkingTime}
+                                onchange={handleParkingTimeChange}>
+                            </lightning-combobox>
+                        </div>
+                        <div class="slds-form-element__control">
+                            <label class="slds-form-element__label" for="date-input">Select Date</label>
+                            <input type="date" id="date-addinput" name="date-addinput" oninput={saveDate} />
+                        </div>
+                    </div>
+
+                    <!-- modal footer start-->
+                    <footer class="slds-modal__footer">
+                        <button class="slds-button slds-button--destructive" onclick={customHideModalPopup}>
+                            Cancel
+                        </button>
+                        <button class="slds-button slds-button_brand" type="submit" onclick={createObject}>
+                            Save
+                        </button>
+                    </footer>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    <!-- modal end -->
+    <!-- Get Record pop-up -->
+    <template if:true={isGetRecordsModalOpen}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+
+            <div class="slds-modal__container">
+                <div class="modal-container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-modal__title">Enter Date Range</h2>
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close" onclick={closePopup}>
+                            <lightning-icon icon-name="utility:close" alternative-text="Close" variant="inverse"
+                                size="small"></lightning-icon>
+                        </button>
+                    </header>
+                    <!-- <div class="slds-form-element__control">
+                    <label class="slds-form-element__label" for="date-input">Select Start Date</label>
+                    <input type="date" id="date-startdate" name="date-startdate" oninput={saveDate} />
+                    <div class="slds-form-element__control">
+                        <label class="slds-form-element__label" for="date-input">Select End Date</label>
+                        <input type="date" id="date-enddate" name="date-enddate" oninput={saveDate} />
+                    </div>
+                </div> -->
+                    <div class="slds-modal__content slds-align_absolute-center">
+                        <lightning-input class="slds-form-element__label" type="date" label="Start Date"
+                            name="startDate"></lightning-input>
+                        <lightning-input class="slds-form-element__label" type="date" label="End Date"
+                            name="endDate"></lightning-input>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <button class="slds-button slds-button_neutral" onclick={closePopup}>Cancel</button>
+                        <button class="slds-button slds-button_brand" data-startdate={startDate} data-enddate={endDate}
+                            onclick={submitDates}>Submit</button>
+                    </footer>
+                </div>
+            </div>
+        </section>
+    </template>
+</template>
